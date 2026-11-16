@@ -125,7 +125,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-          Welcome back, {user.name.split(' ')[0]} 👋
+          Welcome back Guys, {user.name.split(' ')[0]} 👋
         </h1>
         <p className="mt-1 text-gray-500">Here is what is happening with your posts today.</p>
       </div>
