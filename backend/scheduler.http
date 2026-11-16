@@ -1,0 +1,118 @@
+### 1. Creator login
+# @name creatorLogin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "creator@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 2. Manager login
+# @name managerLogin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 3. SUCCESS: draft banao (201)
+# @name okPost
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Scheduler success test",
+  "content": "Hello from the scheduler!",
+  "platforms": ["instagram", "linkedin", "facebook"]
+}
+
+### 4. SUCCESS: submit (200)
+POST http://localhost:5000/api/posts/{{okPost.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 5. SUCCESS: approve, kal ka waqt (200)
+POST http://localhost:5000/api/posts/{{okPost.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 1 d}}"
+}
+
+### 6. SUCCESS: abhi halat "scheduled" (200)
+GET http://localhost:5000/api/posts/{{okPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 7. SUCCESS: SQL aur 1 minute ke baad halat "published" (200)
+GET http://localhost:5000/api/posts/{{okPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 8. SUCCESS: creator ki notifications, "was published" (200)
+GET http://localhost:5000/api/notifications
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 9. FAILURE: draft banao, text me [simulate-fail] (201)
+# @name badPost
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Scheduler failure test",
+  "content": "This one breaks on purpose [simulate-fail]",
+  "platforms": ["instagram", "linkedin"]
+}
+
+### 10. FAILURE: submit (200)
+POST http://localhost:5000/api/posts/{{badPost.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 11. FAILURE: approve, kal ka waqt (200)
+POST http://localhost:5000/api/posts/{{badPost.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 1 d}}"
+}
+
+### 12. FAILURE: SQL aur 3 minute ke baad halat aur timeline (200)
+GET http://localhost:5000/api/posts/{{badPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 13. FAILURE: manager ki notifications, "could not be published" (200)
+GET http://localhost:5000/api/notifications
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+
+### 14. PARTIAL: sirf LinkedIn fail (201)
+# @name halfPost
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Scheduler partial test",
+  "content": "Only LinkedIn breaks [simulate-fail:linkedin]",
+  "platforms": ["instagram", "linkedin"]
+}
+
+### 15. PARTIAL: submit (200)
+POST http://localhost:5000/api/posts/{{halfPost.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 16. PARTIAL: approve (200)
+POST http://localhost:5000/api/posts/{{halfPost.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 1 d}}"
+}
+
+### 17. PARTIAL: SQL aur 3 minute ke baad detail (200)
+GET http://localhost:5000/api/posts/{{halfPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}

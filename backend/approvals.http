@@ -1,0 +1,167 @@
+### 1. Creator login
+# @name creatorLogin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "creator@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 2. Manager login
+# @name managerLogin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 3. Naya draft banao (201)
+# @name p1
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Eid offer",
+  "content": "Eid special: buy one get one free.",
+  "platforms": ["instagram"]
+}
+
+### 4. Manager draft approve nahi kar sakta (404)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 1 d}}"
+}
+
+### 5. Creator submit kare (200)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 6. Creator approve nahi kar sakta (403)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 1 d}}"
+}
+
+### 7. Approve, waqt ke bina (400)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{}
+
+### 8. Approve, guzra hua waqt (400)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 -1 d}}"
+}
+
+### 9. Approve, galat format (400)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "tomorrow"
+}
+
+### 10. Reject, wajah ke bina (400)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/reject
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "reason": ""
+}
+
+### 11. Reject, wajah ke saath (200)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/reject
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "reason": "Please add a clearer call to action"
+}
+
+### 12. Creator ki notifications (200)
+GET http://localhost:5000/api/notifications
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 13. Rejected post dobara reject (409)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/reject
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "reason": "Second try"
+}
+
+### 14. Creator rejected post edit kare (200)
+PUT http://localhost:5000/api/posts/{{p1.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Eid offer (fixed)",
+  "content": "Eid special: buy one get one free. Order now at our website!",
+  "platforms": ["instagram"]
+}
+
+### 15. Dobara submit (200)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 16. Manager approve, kal ka waqt (200)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 1 d}}",
+  "comment": "Looks good"
+}
+
+### 17. Dobara approve (409)
+POST http://localhost:5000/api/posts/{{p1.response.body.$.id}}/approve
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "{{$datetime iso8601 2 d}}"
+}
+
+### 18. Creator post ki detail aur timeline (200)
+GET http://localhost:5000/api/posts/{{p1.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 19. Creator ki notifications dobara (200)
+# @name latest
+GET http://localhost:5000/api/notifications
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 20. Sab se nayi notification "parh li" (200)
+PATCH http://localhost:5000/api/notifications/{{latest.response.body.$.notifications[0].id}}/read
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 21. Sab notifications "parh li" (200)
+POST http://localhost:5000/api/notifications/read-all
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 22. Notifications bina token ke (401)
+GET http://localhost:5000/api/notifications
+
+### 23. Manager: scheduled posts ki list (200)
+GET http://localhost:5000/api/posts?status=scheduled
+Authorization: Bearer {{managerLogin.response.body.$.token}}

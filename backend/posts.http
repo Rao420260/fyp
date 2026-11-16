@@ -1,0 +1,126 @@
+### 1. Creator login
+# @name creatorLogin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "creator@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 2. Manager login
+# @name managerLogin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 3. Draft post banao (201)
+# @name newPost
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Summer sale",
+  "content": "Our summer sale starts today! Up to 30% off.",
+  "platforms": ["instagram", "linkedin"]
+}
+
+### 4. Bina token ke (401)
+POST http://localhost:5000/api/posts
+Content-Type: application/json
+
+{
+  "title": "No token",
+  "content": "This should fail",
+  "platforms": ["instagram"]
+}
+
+### 5. Title ke bina (400)
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "content": "Missing title",
+  "platforms": ["instagram"]
+}
+
+### 6. Manager post nahi bana sakta (403)
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Manager post",
+  "content": "Managers cannot create posts",
+  "platforms": ["instagram"]
+}
+
+### 7. Creator ki posts ki list (200)
+GET http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 8. Ek post ki detail (200)
+GET http://localhost:5000/api/posts/{{newPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 9. Post edit karo (200)
+PUT http://localhost:5000/api/posts/{{newPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Summer sale (updated)",
+  "content": "Our summer sale starts today! Up to 40% off.",
+  "platforms": ["instagram", "linkedin", "facebook"]
+}
+
+### 10. Image upload (201)
+POST http://localhost:5000/api/posts/{{newPost.response.body.$.id}}/media
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: multipart/form-data; boundary=PostFlowBoundary
+
+--PostFlowBoundary
+Content-Disposition: form-data; name="image"; filename="test.png"
+Content-Type: image/png
+
+< ./test.png
+--PostFlowBoundary--
+
+### 11. Manager abhi draft nahi dekh sakta (404)
+GET http://localhost:5000/api/posts/{{newPost.response.body.$.id}}
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+
+### 12. Approval ke liye submit (200)
+POST http://localhost:5000/api/posts/{{newPost.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 13. Dobara submit (409)
+POST http://localhost:5000/api/posts/{{newPost.response.body.$.id}}/submit
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+
+### 14. Manager ab post dekh sakta hai (200)
+GET http://localhost:5000/api/posts
+Authorization: Bearer {{managerLogin.response.body.$.token}}
+
+### 15. Delete test ke liye ek aur draft banao (201)
+# @name tempPost
+POST http://localhost:5000/api/posts
+Authorization: Bearer {{creatorLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Temporary post",
+  "content": "I will delete this one",
+  "platforms": ["facebook"]
+}
+
+### 16. Wo draft delete karo (200)
+DELETE http://localhost:5000/api/posts/{{tempPost.response.body.$.id}}
+Authorization: Bearer {{creatorLogin.response.body.$.token}}

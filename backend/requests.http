@@ -1,0 +1,61 @@
+### 1. Health check
+GET http://localhost:5000/api/health
+
+### 2. Signup (naya user)
+POST http://localhost:5000/api/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test Creator",
+  "email": "test@example.com",
+  "password": "Test@1234",
+  "role": "creator"
+}
+
+### 3. Wohi email dobara (409 aana chahiye)
+POST http://localhost:5000/api/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test Creator",
+  "email": "test@example.com",
+  "password": "Test@1234",
+  "role": "creator"
+}
+
+### 4. Chhota password (400 aana chahiye)
+POST http://localhost:5000/api/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Short Pass",
+  "email": "short@example.com",
+  "password": "123",
+  "role": "creator"
+}
+
+### 5. Galat password se login (401 aana chahiye)
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@postflow.com",
+  "password": "WrongPassword"
+}
+
+### 6. Sahi login (token milega)
+# @name login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@postflow.com",
+  "password": "Demo@1234"
+}
+
+### 7. Token ke bina /me (401 aana chahiye)
+GET http://localhost:5000/api/auth/me
+
+### 8. Token ke saath /me (user ki info aani chahiye)
+GET http://localhost:5000/api/auth/me
+Authorization: Bearer {{login.response.body.$.token}}
